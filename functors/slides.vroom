@@ -1,0 +1,303 @@
+---- config
+# Basic config options.
+title: Functors and Applicative Functors
+indent: 5
+auto_size: 1
+# height: 18
+# width: 69
+vim_opts: '-u NONE'
+skip: 0
+
+----
+== Functors and Applicative Functors
+
+---- ghci,i4
+
+type Price = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+sneakers = Order 23 3.0
+
+---- ghci,i4
+type Price = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice :: Order -> Price
+getPrice (Order p n) = p * n
+
+sneakers = Order 23 3.0
+
+main = do
+    print sneakers
+    print (getPrice sneakers)
+
+---- center
+
+But what if there may be no orders?
+
+---- haskell, i4
+
+getPriceM :: Maybe Order -> Maybe Price
+
+---- haskell, i4
+
+getPriceM :: Maybe Order -> Maybe Price
+
+getPriceM (Just o) = Just $ getPrice o
+getPriceM Nothing = Nothing
+
+---- ghci,i4
+type Price = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice :: Order -> Price
+getPrice (Order p n) = p * n
+
+getPriceM :: Maybe Order -> Maybe Price
+getPriceM (Just o) = Just $ getPrice o
+getPriceM Nothing = Nothing
+
+sneakers = Just (Order 23 3.0)
+
+main = do
+    print sneakers
+    print (getPriceM sneakers)
+
+---- center
+
+Could we do better?
+
+---- haskell,i4
+
+--- how about this?
+getPriceM = fmap getPrice
+
+---- ghci,i4
+type Price = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice :: Order -> Price
+getPrice (Order p n) = p * n
+
+getPriceM :: Maybe Order -> Maybe Price
+getPriceM = fmap getPrice
+
+sneakers = Just (Order 23 3)
+
+main = do
+    print sneakers
+    print (getPriceM sneakers)
+
+---- ghci,i4
+
+getPriceM o = getPrice `fmap` o
+
+---- ghci,i4
+
+getPriceM o = getPrice <$> o
+
+---- center
+
+But what if the function takes more than one argument?
++Can we still "lift" it?
+
+---- ghci,i4
+type Price = Double
+type Tax = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice :: Order -> Tax -> Price
+getPrice (Order p n) t = p * n * (1 + t)
+
+sneakers = Order 23 3
+tax = 0.21
+
+---- ghci,i4
+
+-- we could do it like this...
+getPriceM :: Maybe Order -> Maybe Tax -> Maybe Price
+getPriceM (Just o) (Just t) = Just $ getPrice o t
+getPriceM _ _ = Nothing
+
+---- ghci,i4
+
+-- but nobody has time for that
+getPriceM :: Maybe Order -> Maybe Tax -> Maybe Price
+getPriceM o t = getPrice <$> o <*> t
+
+---- ghci,i4
+type Price = Double
+type Tax = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice :: Order -> Tax -> Price
+getPrice (Order p n) t = p * n * (1 + t)
+
+getPriceM :: Maybe Order -> Maybe Tax -> Maybe Price
+getPriceM o t = getPrice <$> o <*> t
+
+sneakers = Just $ Order 23 3.0
+tax = Just 1.21
+
+main = do
+    print sneakers
+    print (getPriceM sneakers tax)
+
+---- center
+Can we add more parameters?
++Yes.
+
+---- ghci, i4
+type Price = Double
+type Tax = Double
+type Coupon = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double }
+             deriving (Show, Eq)
+
+getPrice :: Order -> Tax -> Coupon -> Price
+getPrice (Order p n) t c = p * n * (1 + t) * (1 - c)
+
+getPriceM :: Maybe Order -> Maybe Tax -> Maybe Coupon -> Maybe Price
+getPriceM o t c = getPrice <$> o <*> t <*> c
+
+sneakers = Just $ Order 23 3.0
+tax = Just 1.21
+coupon = Just 0.1
+
+main = do
+    print sneakers
+    print (getPriceM sneakers tax coupon)
+
+----
+
+Maybe functor: things that may not be there.
+
+----
+
+What other functors are there?
+
+---- ghci, i4
+
+-- an order with comments
+sneakers = ("Please gift-wrap it", Order 34 3)
+
+---- ghci, i4
+type Price = Double
+type Tax = Double
+type Coupon = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice (Order p n) t c = p * n * (1 + t) * (1 - c)
+
+getPriceM o t c = getPrice <$> o <*> t <*> c
+
+sneakers = ("Please gift-wrap it", Order 34 3)
+tax = 1.21
+coupon = 0.1
+
+main = do
+    print sneakers
+    print (getPriceM sneakers (pure tax) (pure coupon))
+
+---- haskell, i4
+
+-- A list of orders
+sneakers = [Order 34 3, Order 10 2, Order 23.4 1]
+
+---- ghci, i4
+type Price = Double
+type Tax = Double
+type Coupon = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice (Order p n) t c = p * n * (1 + t) * (1 - c)
+
+getPriceM o t c = getPrice <$> o <*> t <*> c
+
+sneakers = [Order 34 3, Order 10 2, Order 23.4 1]
+tax = 1.21
+coupon = 0.1
+
+main = do
+    print sneakers
+    print (getPriceM sneakers (pure tax) (pure coupon))
+
+----
+
+== But what if we have multiple taxes and coupons?
+
+---- haskell, i4
+
+sneakers = [Order 34 3, Order 10 2, Order 23.4 1]
+tax      = [1.21, 1.11, 1.07]
+coupon   = [0.0, 0.1, 0.25]
+
+----
+== What should the price be?
+
+----
+== What should the price be?
+
+* All possible (Order, Tax, Coupon) combinations: []
+
+----
+== What should the price be?
+
+* All possible (Order, Tax, Coupon) combinations: []
+* Match first Order with first Tax and First coupon, etc.: ZipList
+
+---- ghci, i4
+type Price = Double
+type Tax = Double
+type Coupon = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice (Order p n) t c = p * n * (1 + t) * (1 - c)
+
+getPriceM o t c = getPrice <$> o <*> t <*> c
+
+sneakers = [Order 34 3, Order 10 2, Order 23.4 1]
+tax      = [1.21, 1.11, 1.07]
+coupon   = [0.0, 0.1, 0.25]
+
+main = do
+    print sneakers
+    print (getPriceM sneakers tax coupon)
+
+---- ghci, i4
+import Control.Applicative
+type Price = Double
+type Tax = Double
+type Coupon = Double
+
+data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+getPrice (Order p n) t c = p * n * (1 + t) * (1 - c)
+
+getPriceM o t c = getPrice <$> o <*> t <*> c
+
+sneakers = ZipList [Order 34 3, Order 10 2, Order 23.4 1]
+tax      = ZipList [1.21, 1.11, 1.07]
+coupon   = ZipList [0.0, 0.1, 0.25]
+
+main = do
+    print sneakers
+    print (getPriceM sneakers tax coupon)
+
+----
+
+== Other interesting functors:
+
++* Function application
++* (Either a)
++* Data structures (map, trees)

@@ -1,0 +1,86 @@
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script>
+function navigate(e) {
+    var keynum = (window.event) // IE
+        ? e.keyCode
+        : e.which;
+    if (keynum == 8) {
+        window.location = "031.hsi" + ".html";
+        return false;
+    }
+    if (keynum == 13 || keynum == 32) {
+        window.location = "033" + ".html";
+        return false;
+    }
+    if (keynum == 73 || keynum == 105) {
+        window.location = "index.html";
+        return false;
+    }
+    return true;
+}
+</script>
+</head>
+<body onkeydown="return navigate(event)">
+<div style="border-style: solid ; border-width: 2px ; font-size: x-large">
+<pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    import Control.Applicative
+    type Price = Double
+    type Tax = Double
+    type Coupon = Double
+
+    data Order = Order { itemPrice :: Double, itemCount :: Double } deriving Show
+
+    getPrice (Order p n) t c = p * n * (1 + t) * (1 - c)
+
+    getPriceM o t c = getPrice &lt;$&gt; o &lt;*&gt; t &lt;*&gt; c
+
+    sneakers = ZipList [Order 34 3, Order 10 2, Order 23.4 1]
+    tax      = ZipList [1.21, 1.11, 1.07]
+    coupon   = ZipList [0.0, 0.1, 0.25]
+
+    main = do
+        print sneakers
+        print (getPriceM sneakers tax coupon)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+<br>
+<div style="font-size: small">
+<p></p>
+</div>
+</body>
+</html>
